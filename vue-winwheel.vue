@@ -8,19 +8,26 @@
 							<p style="color: white" align="center">Sorry, your browser doesn't support canvas. Please try Google Chrome.</p>
 						</canvas>
 					</div>
-					<!-- <div class="button-wrapper">
-						<a class="btn btn-play" href="#" @click.prevent="startSpin()" v-if="!loadingPrize && !wheelSpinning">SPIN!</a>
-					</div> -->
 				</div>
 			</div>
-			<div class="custom-modal modal-mask" id="modalSpinwheel" v-if="modalPrize">
-				<div slot="body">
-					<a href="" @click.prevent="hidePrize()" class="modal-dismiss">
-						<i class="icon_close"></i>
-					</a>
-					<h1> {{prizeName}}</h1>
+			<slot name="wheel-control">
+				<div class="button-wrapper">
+					<a class="btn btn-play" href="#" @click.prevent="startSpin()" v-if="!loadingPrize && !wheelSpinning">SPIN!</a>
 				</div>
-			</div>
+			</slot>
+			<transition :name="transisionName">
+			<slot name="prize" v-if="modalPrize">
+				<div class="custom-modal modal-mask" id="modalSpinwheel">
+					<div>
+						<a href="" @click.prevent="hidePrize()" class="modal-dismiss">
+							<i class="icon_close"></i>
+						</a>
+						<h1> {{prizeName}}</h1>
+						<div class='prize-desc'>{{prizeDesc}}</div>
+					</div>
+				</div>
+			</slot>
+			</transition>
 		</section>
 </template>
 
@@ -77,35 +84,42 @@ export default {
 					}
 				]
 			}
-		}
+    	},
+		winWheelOptions: {
+			default() {
+				return [{
+					textFontSize: 14,
+					outterRadius: 410,
+					innerRadius: 25,
+					lineWidth: 8,
+					animation: {
+						type: 'spinOngoing',
+						duration: 0.5
+					}
+				}]
+			}
+		},
+		prizeName: '',
+		prizeDesc: '',
+		modalPrize: false,
+		transisionName: ''
   },
   data () {
     return {
       loadingPrize: false,
       theWheel: null,
-      modalPrize: false,
+      // modalPrize: false,
       wheelPower: 1,
       wheelSpinning: false,
-      prizeName: 'BUY 1 GET 1',
-      WinWheelOptions: {
-        textFontSize: 14,
-        outterRadius: 410,
-        innerRadius: 25,
-        lineWidth: 8,
-        animation: {
-          type: 'spinOngoing',
-          duration: 0.5
-        }
-      }
     }
   },
   methods: {
     showPrize () {
-      this.modalPrize = true
+      this.$emit("update:modalPrize", true)
 	},
 
     hidePrize () {
-      this.modalPrize = false
+      this.$emit("update:modalPrize", false)
 	},
 
     startSpin () {
@@ -113,15 +127,10 @@ export default {
         this.theWheel.startAnimation()
         this.wheelSpinning = true
         this.theWheel = new Winwheel.Winwheel({
-          ...this.WinWheelOptions,
+          ...this.winWheelOptions,
           numSegments: this.segments.length,
           segments: this.segments,
-          animation: {
-            type: 'spinToStop',
-            duration: 5,
-            spins: 5,
-            callbackFinished: this.onFinishSpin
-          }
+
         })
 
         // example input prize number get from Backend
@@ -138,7 +147,7 @@ export default {
 
     resetWheel () {
       this.theWheel = new Winwheel.Winwheel({
-        ...this.WinWheelOptions,
+        ...this.winWheelOptions,
         numSegments: this.segments.length,
         segments: this.segments
       })
@@ -158,14 +167,20 @@ export default {
 	  this.loadingPrize = false
 	},
 
-    onFinishSpin (indicatedSegment) {
-      this.prizeName = indicatedSegment.text
+onFinishSpin (indicatedSegment) {
+	  if( typeof this.onSpinFinishHandler === 'function' ){
+		this.onSpinFinishHandler(indicatedSegment)
+	  } else {
+	    this.prizeName = indicatedSegment.text
+	  }
       this.showPrize()
     }
   },
 
-  mounted () {
-    this.initSpin()
+  watch: {
+    segments: function() {
+      this.initSpin();
+    }
   }
 }
 
