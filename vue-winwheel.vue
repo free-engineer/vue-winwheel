@@ -1,5 +1,10 @@
 <template>
 		<section class="vue-winwheel">
+			<slot name="wheel-upper">
+				<div class="button-wrapper">
+					<a class="btn btn-play" href="#" @click.prevent="startSpin()" v-if="!loadingPrize && !wheelSpinning">SPIN!</a>
+				</div>
+			</slot>
 			<div class="mobile-container">
 				<h1 v-if="wheelTitle">{{wheelTitle}}</h1>
 				<div class="wheel-wrapper">
@@ -10,11 +15,12 @@
 					</div>
 				</div>
 			</div>
-			<slot name="wheel-control">
+			<slot name="wheel-lower">
 				<div class="button-wrapper">
 					<a class="btn btn-play" href="#" @click.prevent="startSpin()" v-if="!loadingPrize && !wheelSpinning">SPIN!</a>
 				</div>
 			</slot>
+			<div id="prize-wrapper" :class="prizeWrapperClass">
 			<transition :name="transisionName">
 			<slot name="prize" v-if="modalPrize">
 				<div class="custom-modal modal-mask" id="modalSpinwheel">
@@ -28,6 +34,7 @@
 				</div>
 			</slot>
 			</transition>
+			</div>
 		</section>
 </template>
 
@@ -101,6 +108,7 @@ export default {
 		},
 		prizeName: '',
 		prizeDesc: '',
+		prizeWrapperClass: '',
 		modalPrize: false,
 		transisionName: ''
   },
